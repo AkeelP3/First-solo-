@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Book details and reader options on OpenPage.">
+  <title>Book Details — OpenPage</title>
+  <link rel="stylesheet" href="/src/css/global.css">
+  <link rel="icon" href="/logo-icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/logo-icon.png" type="image/png" sizes="32x32">
+  <meta name="theme-color" content="#1a2a6c" id="theme-color">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="/" class="site-logo" aria-label="OpenPage Home">
+        <img src="/logo-icon.svg" alt="" width="32" height="32" />
+        <span class="logo-text">OpenPage</span>
+      </a>
+      <form class="search-form" role="search" action="/search.html" method="GET">
+        <label for="search-input" class="sr-only">Search books</label>
+        <input id="search-input" class="search-input" type="search" name="q" placeholder="Search titles, authors…" autocomplete="off" />
+        <button type="submit" class="search-btn" aria-label="Search"><span>Search</span></button>
+      </form>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="/browse.html">Browse</a>
+        <a href="/about.html">About</a>
+        <a href="https://ko-fi.com/openpage" target="_blank" rel="noopener" class="nav-donate" aria-label="Support OpenPage on Ko-fi">
+          <img src="/icons/donate.svg" alt="" width="16" height="16" aria-hidden="true" />
+          <span>Support</span>
+        </a>
+        <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Switch to dark mode" title="Switch to dark mode">
+          <img src="/icons/moon.svg" alt="" width="20" height="20" aria-hidden="true" />
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="main-content">
+    <nav aria-label="Breadcrumb">
+      <ol style="display:flex;gap:var(--space-2);font-size:var(--text-sm);color:var(--color-text-muted);padding:var(--space-2) 0;">
+        <li><a href="/">Home</a></li>
+        <li aria-hidden="true">/</li>
+        <li aria-current="page" id="breadcrumb-current">Book</li>
+      </ol>
+    </nav>
+
+    <div id="book-detail" class="book-detail">
+      <!-- Loading state -->
+      <div class="book-detail-cover skeleton" aria-hidden="true"></div>
+      <div class="book-detail-info">
+        <div class="skeleton" style="height:2rem;width:70%;margin-bottom:0.5rem"></div>
+        <div class="skeleton" style="height:1.25rem;width:40%;margin-bottom:0.5rem"></div>
+        <div class="skeleton" style="height:0.875rem;width:50%"></div>
+        <div class="skeleton" style="height:5rem;width:100%;margin-top:1rem"></div>
+        <div class="skeleton" style="height:2.5rem;width:160px;margin-top:1rem;border-radius:8px"></div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="/about.html">About</a>
+        <a href="/about.html#privacy">Privacy</a>
+      </nav>
+      <p>OpenPage — free books from Project Gutenberg and open libraries. 📚</p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { fetchBookById, getBookCover, getAuthorName, getBookTextUrl } from '/src/js/main.js';
+    import { initTheme } from '/src/js/theme.js';
+
+    initTheme();
+
+    const params = new URLSearchParams(window.location.search);
+    const bookId = params.get('id');
+    const container = document.getElementById('book-detail');
+
+    if (!bookId) {
+      container.innerHTML = '<div class="empty-state"><p>No book specified. <a href="/">Browse books</a>.</p></div>';
+    } else {
+      fetchBookById(bookId).then(book => {
+        if (!book) {
+          container.innerHTML = '<div class="empty-state"><p>Book not found. <a href="/">Browse books</a>.</p></div>';
+          return;
+        }
+
+        const title = book.title || 'Untitled';
+        const author = getAuthorName(book);
+        const cover = getBookCover(book);
+        const textUrl = getBookTextUrl(book);
+        const subjects = (book.subjects || []).slice(0, 5);
+        const downloadCount = book.download_count || 0;
+        const languages = (book.languages || []).join(', ').toUpperCase();
+
+        // Description from subjects
+        const description = subjects.length > 0
+          ? subjects.join(', ')
+          : 'A classic work from Project Gutenberg.';
+
+        document.title = `${title} — OpenPage`;
+        document.getElementById('breadcrumb-current').textContent = title;
+
+        container.innerHTML = `
+          <div class="book-detail-cover">
+            ${cover
+              ? `<img src="${cover}" alt="${title} cover" />`
+              : `<div class="placeholder-cover" style="font-size:3rem">${title.charAt(0).toUpperCase()}</div>`
+            }
+          </div>
+          <div class="book-detail-info">
+            <h1>${title}</h1>
+            <p class="book-author-lg">by ${author}</p>
+            <dl class="book-detail-meta">
+              <div><dt>Downloads</dt><dd>${downloadCount.toLocaleString()}</dd></div>
+              ${languages ? `<div><dt>Language</dt><dd>${languages}</dd></div>` : ''}
+              ${subjects.length > 0 ? `<div><dt>Categories</dt><dd>${subjects.slice(0, 3).join(', ')}</dd></div>` : ''}
+              <div><dt>Source</dt><dd>Project Gutenberg #${book.id}</dd></div>
+            </dl>
+            <p class="book-description">${description}</p>
+            ${textUrl
+              ? `<a href="/reader.html?id=${book.id}" class="read-now-btn">📖 Read Online</a>`
+              : '<p style="color:var(--color-text-muted)">Reading view not available for this format.</p>'
+            }
+            ${textUrl
+              ? `<p style="font-size:var(--text-sm);color:var(--color-text-muted);margin-top:var(--space-2)">
+                  <a href="${textUrl}" target="_blank" rel="noopener">Download plain text ↗</a>
+                </p>`
+              : ''
+            }
+          </div>
+        `;
+      });
+    }
+  </script>
+</body>
+</html>

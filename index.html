@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="OpenPage — a free digital library. Discover, browse, and read thousands of free books. No account needed, no paywall, no friction.">
+  <title>OpenPage — Free Digital Library</title>
+  <link rel="stylesheet" href="/src/css/global.css">
+  <link rel="icon" href="/logo-icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/logo-icon.png" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="/logo-icon.png">
+  <meta name="theme-color" content="#1a2a6c" id="theme-color">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="/" class="site-logo" aria-label="OpenPage Home">
+        <img src="/logo-icon.svg" alt="" width="32" height="32" />
+        <span class="logo-text">OpenPage</span>
+      </a>
+      <form class="search-form" role="search" action="/search.html" method="GET">
+        <label for="search-input" class="sr-only">Search books</label>
+        <input
+          id="search-input"
+          class="search-input"
+          type="search"
+          name="q"
+          placeholder="Search titles, authors…"
+          autocomplete="off"
+        />
+        <button type="submit" class="search-btn" aria-label="Search">
+          <span>Search</span>
+        </button>
+      </form>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="/browse.html">Browse</a>
+        <a href="/about.html">About</a>
+        <a href="https://ko-fi.com/openpage" target="_blank" rel="noopener" class="nav-donate" aria-label="Support OpenPage on Ko-fi">
+          <img src="/icons/donate.svg" alt="" width="16" height="16" aria-hidden="true" />
+          <span>Support</span>
+        </a>
+        <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Switch to dark mode" title="Switch to dark mode">
+          <img src="/icons/moon.svg" alt="" width="20" height="20" aria-hidden="true" />
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="main-content">
+    <section class="page-hero">
+      <h1>Free books for everyone.</h1>
+      <p>Thousands of classic and openly-licensed works — read online instantly, no account required.</p>
+    </section>
+
+    <section aria-labelledby="popular-heading">
+      <div class="section-header">
+        <h2 id="popular-heading">Popular Books</h2>
+        <a href="/browse.html" class="see-all">Browse all →</a>
+      </div>
+      <div id="book-grid" class="book-grid" role="list" aria-label="Book listings">
+        <!-- Books rendered by JavaScript -->
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="/about.html">About</a>
+        <a href="/about.html#privacy">Privacy</a>
+      </nav>
+      <p>OpenPage — free books from Project Gutenberg and open libraries. 📚</p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { fetchBooks, renderBookGrid } from '/src/js/main.js';
+    import { initTheme } from '/src/js/theme.js';
+
+    initTheme();
+
+    const grid = document.getElementById('book-grid');
+
+    // Show skeleton loading state
+    grid.innerHTML = Array(12).fill('').map(() =>
+      `<article class="book-card" aria-hidden="true">
+        <div class="book-cover skeleton" style="aspect-ratio:3/4"></div>
+        <div class="book-info">
+          <div class="skeleton" style="height:1rem;width:80%;margin-bottom:0.25rem"></div>
+          <div class="skeleton" style="height:0.75rem;width:60%"></div>
+        </div>
+      </article>`
+    ).join('');
+
+    // Load books
+    fetchBooks(12).then(books => {
+      renderBookGrid(books, grid);
+    });
+  </script>
+</body>
+</html>

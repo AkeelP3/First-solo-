@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Search free books on OpenPage — thousands of classic literature titles available instantly.">
+  <title>Search — OpenPage</title>
+  <link rel="stylesheet" href="/src/css/global.css">
+  <link rel="icon" href="/logo-icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/logo-icon.png" type="image/png" sizes="32x32">
+  <meta name="theme-color" content="#1a2a6c" id="theme-color">
+</head>
+<body>
+  <a href="#main" class="skip-link">Skip to main content</a>
+
+  <header class="site-header" role="banner">
+    <div class="header-inner">
+      <a href="/" class="site-logo" aria-label="OpenPage Home">
+        <img src="/logo-icon.svg" alt="" width="32" height="32" />
+        <span class="logo-text">OpenPage</span>
+      </a>
+      <form class="search-form" role="search" action="/search.html" method="GET">
+        <label for="search-input" class="sr-only">Search books</label>
+        <input id="search-input" class="search-input" type="search" name="q" placeholder="Search titles, authors…" autocomplete="off" />
+        <button type="submit" class="search-btn" aria-label="Search"><span>Search</span></button>
+      </form>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="/browse.html">Browse</a>
+        <a href="/about.html">About</a>
+        <a href="https://ko-fi.com/openpage" target="_blank" rel="noopener" class="nav-donate" aria-label="Support OpenPage on Ko-fi">
+          <img src="/icons/donate.svg" alt="" width="16" height="16" aria-hidden="true" />
+          <span>Support</span>
+        </a>
+        <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Switch to dark mode" title="Switch to dark mode">
+          <img src="/icons/moon.svg" alt="" width="20" height="20" aria-hidden="true" />
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main" class="main-content">
+    <div class="search-page-header">
+      <h1>Search Books</h1>
+      <p id="results-count" class="search-results-count" aria-live="polite"></p>
+    </div>
+    <div id="book-grid" class="book-grid" role="list" aria-label="Search results">
+      <!-- Results rendered by JavaScript -->
+    </div>
+    <div id="empty-state" class="empty-state" hidden>
+      <p>No results found. Try a different search term.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer" role="contentinfo">
+    <div class="footer-inner">
+      <nav class="footer-links" aria-label="Footer navigation">
+        <a href="/about.html">About</a>
+        <a href="/about.html#privacy">Privacy</a>
+      </nav>
+      <p>OpenPage — free books from Project Gutenberg and open libraries. 📚</p>
+    </div>
+  </footer>
+
+  <script type="module">
+    import { searchBooks, renderBookGrid } from '/src/js/main.js';
+    import { initTheme } from '/src/js/theme.js';
+
+    initTheme();
+
+    const grid = document.getElementById('book-grid');
+    const emptyState = document.getElementById('empty-state');
+    const resultsCount = document.getElementById('results-count');
+
+    const params = new URLSearchParams(window.location.search);
+    const query = params.get('q') || '';
+
+    if (query) {
+      document.getElementById('search-input').value = query;
+
+      grid.innerHTML = Array(6).fill('').map(() =>
+        `<article class="book-card" aria-hidden="true">
+          <div class="book-cover skeleton" style="aspect-ratio:3/4"></div>
+          <div class="book-info">
+            <div class="skeleton" style="height:1rem;width:80%;margin-bottom:0.25rem"></div>
+            <div class="skeleton" style="height:0.75rem;width:60%"></div>
+          </div>
+        </article>`
+      ).join('');
+
+      resultsCount.textContent = `Searching for "${query}"…`;
+
+      searchBooks(query).then(books => {
+        if (books.length === 0) {
+          grid.innerHTML = '';
+          emptyState.hidden = false;
+          resultsCount.textContent = `No results for "${query}".`;
+        } else {
+          emptyState.hidden = true;
+          resultsCount.textContent = `${books.length} result${books.length !== 1 ? 's' : ''} for "${query}"`;
+          renderBookGrid(books, grid);
+        }
+      });
+    } else {
+      resultsCount.textContent = 'Enter a search term above to find books.';
+      emptyState.hidden = false;
+      emptyState.innerHTML = '<p>Enter a search term to find books.</p>';
+    }
+  </script>
+</body>
+</html>

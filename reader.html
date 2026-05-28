@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Read free books online — OpenPage reader view.">
+  <title>Reader — OpenPage</title>
+  <link rel="stylesheet" href="/src/css/global.css">
+  <link rel="icon" href="/logo-icon.svg" type="image/svg+xml">
+  <link rel="icon" href="/logo-icon.png" type="image/png" sizes="32x32">
+  <meta name="theme-color" content="#1a2a6c" id="theme-color">
+</head>
+<body>
+  <a href="#reader-content" class="skip-link">Skip to book content</a>
+
+  <div class="reader-header" role="banner">
+    <a href="/" class="site-logo" aria-label="OpenPage Home">
+        <img src="/logo-icon.svg" alt="" width="32" height="32" />
+        <span class="logo-text">OpenPage</span>
+      </a>
+    <span class="reader-book-title" id="reader-book-title">Loading…</span>
+    <div class="reader-controls">
+      <button id="font-increase" type="button" aria-label="Increase font size" title="Increase font size">A+</button>
+      <button id="font-decrease" type="button" aria-label="Decrease font size" title="Decrease font size">A−</button>
+      <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Switch to dark mode" title="Switch to dark mode">
+        <img src="/icons/moon.svg" alt="" width="20" height="20" aria-hidden="true" />
+      </button>
+      <a href="/book.html" id="back-to-book" aria-label="Back to book details">← Details</a>
+    </div>
+  </div>
+
+  <main id="reader-content" class="reader-content">
+    <!-- Loading state -->
+    <div aria-label="Loading book content" role="status">
+      <div class="skeleton" style="height:1.5rem;width:60%;margin-bottom:1.5rem"></div>
+      <div class="skeleton" style="height:1rem;width:100%;margin-bottom:0.5rem"></div>
+      <div class="skeleton" style="height:1rem;width:100%;margin-bottom:0.5rem"></div>
+      <div class="skeleton" style="height:1rem;width:90%;margin-bottom:0.5rem"></div>
+      <div class="skeleton" style="height:1rem;width:100%;margin-bottom:0.5rem"></div>
+      <div class="skeleton" style="height:1rem;width:75%;margin-bottom:0.5rem"></div>
+    </div>
+  </main>
+
+  <nav class="reader-nav" aria-label="Reader navigation">
+    <a href="/" aria-label="Back to homepage">← Home</a>
+    <a href="#" id="top-link">Back to top ↑</a>
+  </nav>
+
+  <script type="module">
+    import { fetchBookById, getBookTextUrl, getAuthorName } from '/src/js/main.js';
+    import { initTheme } from '/src/js/theme.js';
+
+    initTheme();
+
+    const params = new URLSearchParams(window.location.search);
+    const bookId = params.get('id');
+    const contentEl = document.getElementById('reader-content');
+    const titleEl = document.getElementById('reader-book-title');
+    const backLink = document.getElementById('back-to-book');
+
+    // Font size controls
+    const increaseBtn = document.getElementById('font-increase');
+    const decreaseBtn = document.getElementById('font-decrease');
+    let fontSize = 18; // px base
+
+    function applyFontSize() {
+      contentEl.style.fontSize = fontSize + 'px';
+    }
+
+    increaseBtn.addEventListener('click', () => {
+      if (fontSize < 28) { fontSize += 2; applyFontSize(); }
+    });
+
+    decreaseBtn.addEventListener('click', () => {
+      if (fontSize > 12) { fontSize -= 2; applyFontSize(); }
+    });
+
+    // Scroll to top
+    document.getElementById('top-link').addEventListener('click', (e) => {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    if (!bookId) {
+      contentEl.innerHTML = '<p style="text-align:center;padding:2rem;">No book specified. <a href="/">Browse books</a>.</p>';
+    } else {
+      backLink.href = `/book.html?id=${bookId}`;
+
+      fetchBookById(bookId).then(book => {
+        if (!book) {
+          contentEl.innerHTML = '<p style="text-align:center;padding:2rem;">Book not found. <a href="/">Browse books</a>.</p>';
+          return;
+        }
+
+        const title = book.title || 'Untitled';
+        const author = getAuthorName(book);
+        titleEl.textContent = `${title} — ${author}`;
+        document.title = `${title} — Reader — OpenPage`;
+
+        const textUrl = getBookTextUrl(book);
+
+        if (!textUrl) {
+          contentEl.innerHTML = `
+            <div style="text-align:center;padding:2rem;">
+              <p>No reading format available for this book.</p>
+              <p><a href="/book.html?id=${book.id}">Back to book details</a></p>
+            </div>
+          `;
+          return;
+        }
+
+        // Show loading
+        contentEl.innerHTML = '<p style="text-align:center;padding:1rem;color:var(--color-text-muted)">Loading book content…</p>';
+
+        // Fetch the plain text
+        fetch(textUrl)
+          .then(res => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.text();
+          })
+          .then(text => {
+            // Process the text into readable paragraphs
+            const processed = processBookText(text, title, author);
+            contentEl.innerHTML = processed;
+
+            // Store reading progress in sessionStorage
+            try {
+              sessionStorage.setItem(`openpage-reader-${bookId}`, window.scrollY);
+            } catch(e) { /* ignore */ }
+          })
+          .catch(err => {
+            contentEl.innerHTML = `
+              <div style="text-align:center;padding:2rem;">
+                <p>Sorry, couldn't load the book content.</p>
+                <p style="font-size:var(--text-sm);color:var(--color-text-muted)">${err.message}</p>
+                <p><a href="${textUrl}" target="_blank" rel="noopener">Download the text file directly ↗</a></p>
+              </div>
+            `;
+          });
+      });
+    }
+
+    /**
+     * Process raw Gutenberg text into readable HTML
+     */
+    function processBookText(text, title, author) {
+      // Remove Gutenberg boilerplate header
+      let body = text;
+
+      // Try to find start of content after the Gutenberg header
+      const startMarkers = [
+        '*** START OF THE PROJECT GUTENBERG EBOOK',
+        '*** START OF THIS PROJECT GUTENBERG EBOOK',
+        '*END*THE SMALL PRINT',
+        '*** START OF THE PROJECT GUTENBERG BOOK',
+      ];
+
+      for (const marker of startMarkers) {
+        const idx = body.indexOf(marker);
+        if (idx !== -1) {
+          // Find end of the marker line
+          const endIdx = body.indexOf('\n', idx);
+          if (endIdx !== -1) {
+            body = body.substring(endIdx + 1);
+          } else {
+            body = body.substring(idx + marker.length);
+          }
+          break;
+        }
+      }
+
+      // Try to find end of content
+      const endMarkers = [
+        '*** END OF THE PROJECT GUTENBERG EBOOK',
+        '*** END OF THIS PROJECT GUTENBERG EBOOK',
+        'End of the Project Gutenberg',
+        '*** END OF THE PROJECT GUTENBERG BOOK',
+      ];
+
+      for (const marker of endMarkers) {
+        const idx = body.indexOf(marker);
+        if (idx !== -1) {
+          body = body.substring(0, idx);
+          break;
+        }
+      }
+
+      // Split into paragraphs (double newlines)
+      const paragraphs = body.split(/\n\n+/);
+
+      // Build HTML with title header
+      let html = `<h1>${escapeHtml(title)}</h1>
+<p style="color:var(--color-text-secondary);margin-bottom:var(--space-6)">by <strong>${escapeHtml(author)}</strong></p>`;
+
+      let inChapter = false;
+
+      for (const para of paragraphs) {
+        const trimmed = para.trim();
+        if (!trimmed) continue;
+
+        // Detect chapter headings (all caps, short, or "Chapter" / "CHAPTER")
+        const lines = trimmed.split('\n').map(l => l.trim()).filter(l => l);
+
+        if (lines.length <= 3 && (
+          lines.some(l => /^chapter\s+/i.test(l)) ||
+          lines.some(l => /^[ivxlcdm]+\./i.test(l.toLowerCase())) ||
+          (trimmed.length < 80 && trimmed === trimmed.toUpperCase() && trimmed.length > 5)
+        )) {
+          html += `<h2>${escapeHtml(trimmed)}</h2>`;
+          inChapter = true;
+          continue;
+        }
+
+        // Regular paragraph
+        // Join lines that were broken by single newlines
+        const cleanText = lines
+          .filter(l => l && !/^(\s*[*•‣–—·]+|Page\s+\d+)/.test(l))
+          .join(' ')
+          .replace(/\s+/g, ' ')
+          .trim();
+
+        if (cleanText) {
+          // Check if it's a short line (might be a scene break or subtitle)
+          if (cleanText.length < 60 && cleanText === cleanText.toUpperCase() && cleanText.length > 3) {
+            html += `<p style="text-align:center;font-style:italic;color:var(--color-text-muted)">${escapeHtml(cleanText)}</p>`;
+          } else if (cleanText === '* * *' || cleanText === '***') {
+            html += `<p style="text-align:center;color:var(--color-text-muted)">· · ·</p>`;
+          } else {
+            html += `<p>${escapeHtml(cleanText)}</p>`;
+          }
+        }
+      }
+
+      return html;
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+  </script>
+</body>
+</html>
