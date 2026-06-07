@@ -8,6 +8,7 @@ const STORAGE_KEY = 'openpage-theme';
 const ATTR = 'data-theme';
 const DARK = 'dark';
 const LIGHT = 'light';
+const BASE = '/First-solo-/';
 
 /**
  * Get the preferred theme, checking localStorage first,
@@ -40,8 +41,8 @@ function applyTheme(theme) {
     toggle.setAttribute('aria-label', isDark ? 'Switch to light mode' : 'Switch to dark mode');
     toggle.title = isDark ? 'Switch to light mode' : 'Switch to dark mode';
     toggle.innerHTML = isDark
-      ? `<img src="/icons/sun.svg" alt="" width="20" height="20" aria-hidden="true" />`
-      : `<img src="/icons/moon.svg" alt="" width="20" height="20" aria-hidden="true" />`;
+      ? `<img src="${BASE}icons/sun.svg" alt="" width="20" height="20" aria-hidden="true" />`
+      : `<img src="${BASE}icons/moon.svg" alt="" width="20" height="20" aria-hidden="true" />`;
   }
 
 }
