@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Read free books online — OpenPage reader view.">
+  <title>Reader — OpenPage</title>
+  <link rel="icon" href="/First-solo-/logo-icon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#1a2a6c" id="theme-color">
+  <script type="module" crossorigin src="/First-solo-/assets/reader-8Qg-teUb.js"></script>
+  <link rel="modulepreload" crossorigin href="/First-solo-/assets/theme-DJf8MC0t.js">
+  <link rel="modulepreload" crossorigin href="/First-solo-/assets/main-NwMKqaMi.js">
+  <link rel="stylesheet" crossorigin href="/First-solo-/assets/theme-Bbp7FDYr.css">
+</head>
+<body>
+  <a href="#reader-content" class="skip-link">Skip to book content</a>
+
+  <div class="reader-header" role="banner">
+    <a href="/" class="site-logo" aria-label="OpenPage Home">
+        <img src="/First-solo-/logo-icon.svg" alt="" width="32" height="32" />
+        <span class="logo-text">OpenPage</span>
+      </a>
+    <span class="reader-book-title" id="reader-book-title">Loading…</span>
+    <div class="reader-controls">
+      <button id="font-increase" type="button" aria-label="Increase font size" title="Increase font size">A+</button>
+      <button id="font-decrease" type="button" aria-label="Decrease font size" title="Decrease font size">A−</button>
+      <button id="theme-toggle" class="theme-toggle-btn" type="button" aria-label="Switch to dark mode" title="Switch to dark mode">
+        <img src="/First-solo-/icons/moon.svg" alt="" width="20" height="20" aria-hidden="true" />
+      </button>
+      <a href="/book.html" id="back-to-book" aria-label="Back to book details">← Details</a>
+    </div>
+  </div>
+
+  <main id="reader-content" class="reader-content">
+    <!-- Loading state -->
+    <div aria-label="Loading book content" role="status">
+      <div class="skeleton" style="height:1.5rem;width:60%;margin-bottom:1.5rem"></div>
+      <div class="skeleton" style="height:1rem;width:100%;margin-bottom:0.5rem"></div>
+      <div class="skeleton" style="height:1rem;width:100%;margin-bottom:0.5rem"></div>
+      <div class="skeleton" style="height:1rem;width:90%;margin-bottom:0.5rem"></div>
+      <div class="skeleton" style="height:1rem;width:100%;margin-bottom:0.5rem"></div>
+      <div class="skeleton" style="height:1rem;width:75%;margin-bottom:0.5rem"></div>
+    </div>
+  </main>
+
+  <nav class="reader-nav" aria-label="Reader navigation">
+    <a href="/" aria-label="Back to homepage">← Home</a>
+    <a href="#" id="top-link">Back to top ↑</a>
+  </nav>
+
+</body>
+</html>
